@@ -1,0 +1,135 @@
+{
+  "app": "sorteio",
+  "versao": 7,
+  "exportadoEm": "2026-10-07T20:04:07.938Z",
+  "names": [
+    "Julia",
+    "Matheus",
+    "Clara",
+    "Kauan",
+    "Gustavo",
+    "Rebeca",
+    "Eduarda",
+    "Gabriel"
+  ],
+  "avatars": {
+    "julia": "🐝",
+    "matheus": "🐷",
+    "clara": "🐬",
+    "kauan": "🐢",
+    "gustavo": "🐙",
+    "rebeca": "🐵",
+    "eduarda": "🐧",
+    "gabriel": "🐨"
+  },
+  "value": "100",
+  "qty": 2,
+  "month": 2,
+  "year": 2027,
+  "drawDay": 3,
+  "autoAdvance": true,
+  "cycleOn": true,
+  "cycle": {
+    "number": 1,
+    "won": [
+      "Rebeca",
+      "Matheus",
+      "Eduarda",
+      "Julia",
+      "Kauan",
+      "Clara",
+      "Gustavo",
+      "Gabriel"
+    ],
+    "prev": []
+  },
+  "adjust": {},
+  "history": [
+    {
+      "id": "1791403424869",
+      "winners": [
+        {
+          "name": "Gustavo",
+          "amount": 50
+        },
+        {
+          "name": "Gabriel",
+          "amount": 50
+        }
+      ],
+      "total": 100,
+      "month": 1,
+      "year": 2027,
+      "reference": "Fevereiro / 2027",
+      "cycle": 1,
+      "count": 8,
+      "date": "2026-10-07T20:03:44.866Z",
+      "when": "07/10/2026 às 17:03"
+    },
+    {
+      "id": "1791403424868",
+      "winners": [
+        {
+          "name": "Kauan",
+          "amount": 50
+        },
+        {
+          "name": "Clara",
+          "amount": 50
+        }
+      ],
+      "total": 100,
+      "month": 0,
+      "year": 2027,
+      "reference": "Janeiro / 2027",
+      "cycle": 1,
+      "count": 8,
+      "date": "2026-10-07T20:03:44.866Z",
+      "when": "07/10/2026 às 17:03"
+    },
+    {
+      "id": "1791403424867",
+      "winners": [
+        {
+          "name": "Eduarda",
+          "amount": 50
+        },
+        {
+          "name": "Julia",
+          "amount": 50
+        }
+      ],
+      "total": 100,
+      "month": 11,
+      "year": 2026,
+      "reference": "Dezembro / 2026",
+      "cycle": 1,
+      "count": 8,
+      "date": "2026-10-07T20:03:44.866Z",
+      "when": "07/10/2026 às 17:03"
+    },
+    {
+      "id": "1791403424866",
+      "winners": [
+        {
+          "name": "Rebeca",
+          "amount": 50
+        },
+        {
+          "name": "Matheus",
+          "amount": 50
+        }
+      ],
+      "total": 100,
+      "month": 10,
+      "year": 2026,
+      "reference": "Novembro / 2026",
+      "cycle": 1,
+      "count": 8,
+      "date": "2026-10-07T20:03:44.866Z",
+      "when": "07/10/2026 às 17:03"
+    }
+  ],
+  "adminHash": "",
+  "updatedAt": 1791403425080
+}

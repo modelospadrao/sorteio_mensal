@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Sorteio do Cofrinho</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#EAF6FF; --panel:#FFFFFF; --ink:#1F2A44; --muted:#5B6782; --line:#D6E4F2;
+  --sky:#2F80ED; --sky-soft:#D9E9FF; --sun:#FFC83D; --sun-soft:#FFF4D1; --grass:#27AE60; --grass-light:#BFE8CF; --grass-soft:#DDF5E7; --coral:#F2665A; --red:#E5484D; --red-soft:#FCE1E1; --soft:#F5F9FD;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html,body{height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;font-size:16px;display:flex;flex-direction:column;overflow:hidden}
+h1,h2,.winner,.big,.navtitle{font-family:"Baloo 2","Nunito",system-ui,sans-serif}
+
+/* ---- topo com avançar/voltar ---- */
+.topbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;max-width:1100px;width:100%;margin:0 auto}
+.arrow{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-size:1.4rem;line-height:1;padding:0;display:grid;place-items:center;flex:none}
+.navtitle{font-size:1.35rem;font-weight:800;text-align:center;line-height:1.1}
+.navtitle small{display:block;font-family:"Nunito",sans-serif;font-size:.75rem;color:var(--muted);font-weight:700}
+
+/* ---- telas ---- */
+main{flex:1;position:relative;overflow:hidden;max-width:1100px;width:100%;margin:0 auto}
+.screen{position:absolute;inset:0;padding:4px 14px 14px;display:flex;flex-direction:column;gap:12px;overflow:auto;transition:transform .35s ease,opacity .35s ease;opacity:0;pointer-events:none;transform:translateX(40px)}
+.screen.left{transform:translateX(-40px)}
+.screen.on{opacity:1;pointer-events:auto;transform:none}
+.card{background:var(--panel);border-radius:24px;border:2px solid var(--line);padding:16px}
+
+/* ---- menu de baixo ---- */
+.tabs{flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:var(--panel);border-top:2px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs button{border:none;background:none;border-radius:14px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:0;font-size:.72rem;font-weight:800;color:var(--muted)}
+.tabs button span{font-size:1.35rem;line-height:1.2}
+.tabs button[aria-current="page"]{background:var(--sky);color:#fff}
+
+/* ---- botões e campos ---- */
+button{font:inherit;font-weight:800;border-radius:14px;border:2px solid var(--line);background:var(--panel);color:var(--ink);padding:10px 16px;cursor:pointer}
+button:hover{border-color:var(--sky)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.add{background:var(--sky);color:#fff;border-color:transparent;flex:none}
+button.primary{background:var(--sun);color:var(--ink);border:none;font-family:"Baloo 2",sans-serif;font-size:1.6rem;padding:8px 54px;border-radius:999px;box-shadow:0 6px 0 #D9A21A;transition:transform .08s,box-shadow .08s}
+button.primary:active{transform:translateY(4px);box-shadow:0 2px 0 #D9A21A}
+textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--soft);border:2px solid var(--line);border-radius:14px;padding:9px 12px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--sky);outline-offset:1px}
+label,.lbl{display:block;font-size:.9rem;font-weight:800;margin-bottom:6px}
+.hint{font-size:.8rem;color:var(--muted);margin-top:6px}
+.link{background:none;border:none;color:var(--coral);font-weight:800;padding:4px 0;font-size:.85rem}
+.link.blue{color:var(--sky)}
+.ava{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;background:var(--sky-soft)}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sub{color:var(--muted);font-size:.88rem;margin:0}
+
+/* ---- tela Sortear ---- */
+.stage{position:relative;overflow:hidden;flex:1;min-height:0;background:var(--panel);border-radius:28px;border:2px solid var(--line);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;gap:10px;text-align:center}
+.bgfill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--red-soft);transition:width 1.2s ease}
+.stage>*:not(.bgfill):not(canvas){position:relative;z-index:1}
+.stage h2.big{font-size:clamp(1.5rem,4vw,2.4rem);margin:0;line-height:1.1}
+.meta{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.chip{background:var(--panel);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:800;font-size:clamp(.9rem,1.5vw,1.1rem)}
+.chip.prize{background:var(--grass);color:#fff;border-color:transparent}
+.slots{width:100%;max-width:880px;display:grid;gap:12px}
+.slots.two{grid-template-columns:1fr 1fr}
+.window{border-radius:22px;background:rgba(255,255,255,.85);border:3px dashed var(--line);padding:clamp(12px,3vh,36px) 10px;min-width:0}
+.window.won{border:3px solid var(--sun);background:var(--sun-soft)}
+.label{color:var(--muted);font-weight:800;font-size:clamp(.9rem,1.5vw,1.05rem);margin:0 0 4px}
+.face{font-size:clamp(2.2rem,6vw,4rem);line-height:1;margin:0 0 4px}
+.winner{font-size:clamp(1.9rem,6vw,4.2rem);font-weight:800;line-height:1.05;margin:0;word-break:break-word}
+.slots.two .winner{font-size:clamp(1.4rem,4vw,3rem)}
+.amount{margin:6px 0 0;font-weight:800;font-size:clamp(1rem,2vw,1.35rem);color:var(--grass)}
+.winner.rolling{opacity:.75}
+.window.spinning{animation:glow .7s ease-in-out infinite}
+@keyframes glow{0%,100%{border-color:var(--line);box-shadow:0 0 0 0 rgba(47,128,237,0)}50%{border-color:var(--sky);box-shadow:0 0 0 8px rgba(47,128,237,.18)}}
+.tick{animation:tick .14s ease-out}
+@keyframes tick{from{opacity:.15;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.revealIn{animation:revealIn .9s cubic-bezier(.2,1.4,.4,1)}
+@keyframes revealIn{0%{opacity:0;filter:blur(14px);transform:scale(1.8)}60%{opacity:1;filter:blur(0)}100%{transform:scale(1)}}
+.window.won{animation:wonPulse 1.4s ease-out}
+@keyframes wonPulse{0%{box-shadow:0 0 0 0 rgba(255,200,61,.9)}100%{box-shadow:0 0 0 28px rgba(255,200,61,0)}}
+.flash{position:absolute;inset:0;background:#fff;z-index:2;pointer-events:none;animation:flash .7s ease-out forwards}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.pop{animation:pop .55s ease-out}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.progress{width:100%;max-width:640px}
+.ptext{font-weight:800;font-size:.95rem;margin-bottom:6px}
+.pbar{height:14px;background:rgba(214,228,242,.9);border-radius:999px;overflow:hidden}
+.pbar i{display:block;height:100%;width:0;background:var(--red);border-radius:999px;transition:width 1.2s ease}
+.faces{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px}
+.faces span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:1.15rem;background:var(--panel);border:2px solid var(--line);filter:grayscale(1);opacity:.45;transition:all .5s}
+.faces span.lit{filter:none;opacity:1;border-color:var(--red);background:var(--red-soft)}
+.stamp{font-size:.85rem;color:var(--muted);font-weight:700;min-height:1.2em}
+.actions{display:flex;flex-direction:row;gap:12px;align-items:center;justify-content:center;width:100%}
+#confetti{position:absolute;inset:0;pointer-events:none;width:100%;height:100%;z-index:2}
+
+/* ---- tela Cofrinhos ---- */
+.kids{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.kid{display:grid;grid-template-columns:auto 1fr 82px;gap:10px;align-items:center;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:4px 10px;flex:none}
+.kid .ava{width:34px;height:34px;font-size:1.2rem}
+.kid .nm{font-weight:800;font-size:1rem;line-height:1.1}
+.kbar{position:relative;height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin:5px 0 3px}
+.kbar .rec,.kbar .sav{position:absolute;left:0;top:0;bottom:0;border-radius:999px;transition:width 1s ease}
+.kbar .rec{background:var(--grass-light)}
+.kbar .sav{background:var(--grass)}
+.kid .info{font-size:.74rem;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kid>div{min-width:0}
+.kid .saved label{font-size:.68rem;margin-bottom:1px;color:var(--muted)}
+.kid .saved input{padding:3px 8px;font-weight:800;text-align:right;font-size:.95rem}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted);font-weight:700}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:4px}
+
+/* ---- tela Histórico ---- */
+.hlist{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.hitem{background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:8px 12px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;flex:none}
+.hitem .ref{font-weight:800}
+.hitem .ws{grid-column:1/2;font-size:.92rem}
+.hitem .ws b{font-weight:800}
+.hitem .when{font-size:.75rem;color:var(--muted)}
+.hitem .del{grid-row:1/3;grid-column:2;border:none;background:none;color:var(--muted);padding:4px 8px}
+.hitem .del:hover{color:var(--coral)}
+.pager{flex:none;display:flex;justify-content:center;align-items:center;gap:14px;font-weight:800}
+.pager button{padding:6px 16px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+
+/* ---- telas de configuração ---- */
+.addrow{display:flex;gap:8px}
+.addrow textarea{min-height:46px;height:46px;resize:none;line-height:1.4}
+.names{list-style:none;margin:0;padding:0;flex:1;min-height:0;overflow:auto;border:2px solid var(--line);border-radius:18px;background:var(--panel)}
+.names li{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line)}
+.names li:last-child{border-bottom:none}
+.names input{background:transparent;border:2px solid transparent;padding:4px 6px;border-radius:10px;font-weight:800}
+.names input:hover{border-color:var(--line)}
+.badge{flex:none;font-size:.7rem;font-weight:800;background:var(--grass-soft);color:var(--grass);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.names .x{flex:none;border:none;background:none;color:var(--muted);font-size:1.05rem;padding:2px 8px}
+.names .x:hover{color:var(--coral)}
+.listbar{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted);font-weight:700}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+@media (max-width:720px){.settings{grid-template-columns:1fr}}
+.settings .card{display:flex;flex-direction:column;gap:10px}
+.settings h2{font-size:1.1rem;margin:0}
+.row{display:grid;grid-template-columns:1fr 100px;gap:10px}
+.money{position:relative}
+.money span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:800}
+.money input{padding-left:40px;font-weight:800}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border:2px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{border:none;background:none;border-radius:10px;padding:8px;font-weight:800;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--sky);color:#fff}
+.split{font-size:.86rem;color:var(--muted)}
+.split b{color:var(--ink)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;font-weight:700;margin:0}
+.check input{width:auto;margin-top:4px;accent-color:var(--sky)}
+.cyclebox{background:var(--sky-soft);border-radius:14px;padding:10px 12px;font-size:.86rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.backup{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sync{font-size:.75rem;color:var(--muted);text-align:center}
+
+.modal{position:fixed;inset:0;background:rgba(31,42,68,.45);display:grid;place-items:center;padding:20px;z-index:20}
+.modal .box{background:var(--panel);border-radius:22px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(31,42,68,.25)}
+.modal p{margin:0 0 18px;font-weight:700;font-size:1.05rem}
+.modal .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal .ok{background:var(--sky);color:#fff;border-color:transparent}
+.modal .ok.danger{background:var(--red);}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-size:.95rem;font-weight:700;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;z-index:10}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.screen,.toast,.bgfill,.pbar i,.kbar .rec,.kbar .sav,.faces span{transition:none}}
+
+/* ---- modo visualização e agenda ---- */
+.loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:30;font-weight:800;color:var(--muted);text-align:center;padding:20px}
+.viewbar{flex:none;text-align:center;font-size:.8rem;font-weight:800;color:#fff;background:var(--sky);padding:4px 10px}
+.viewbar button{background:none;border:none;color:#fff;text-decoration:underline;padding:0 0 0 4px;font-size:.8rem;font-weight:800}
+.count{display:flex;align-items:center;gap:14px;background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:12px 16px;flex:none}
+.count .days{font-family:"Baloo 2",sans-serif;font-size:2.8rem;font-weight:800;line-height:1;color:var(--red);min-width:64px;text-align:center}
+.count .days small{display:block;font-family:"Nunito",sans-serif;font-size:.75rem;color:var(--muted);font-weight:800}
+.count .txt{font-weight:800;line-height:1.25}
+.count .txt span{display:block;font-size:.82rem;color:var(--muted);font-weight:700}
+.count.today{background:var(--sun-soft);border-color:var(--sun)}
+.last{background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:10px 14px;flex:none}
+.last .ttl{font-size:.8rem;color:var(--muted);font-weight:800;margin-bottom:4px}
+.last .ws{display:flex;flex-wrap:wrap;gap:6px 16px}
+.last .w{display:flex;align-items:center;gap:8px;font-weight:800}
+.last .w .ava{width:38px;height:38px;font-size:1.3rem}
+.last .w small{display:block;color:var(--grass);font-size:.85rem}
+.mini{background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:10px 14px;flex:none}
+.year{flex:1;min-height:0;background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.year .yh{display:flex;justify-content:space-between;align-items:center;font-weight:800}
+.year .yh button{width:34px;height:34px;padding:0;border-radius:50%}
+.months{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px}
+.mcell{cursor:pointer;font:inherit;color:inherit;border-radius:14px;background:var(--soft);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:54px;padding:4px;text-align:center}
+.mcell b{font-size:.78rem}
+.mcell .f{font-size:1.1rem;line-height:1.1}
+.mcell .f.lock{filter:grayscale(1);opacity:.6}
+.mcell.done{background:var(--grass-soft);border-color:var(--grass-light)}
+.mcell.now{border-color:var(--red);background:var(--red-soft)}
+.mcell.past{opacity:.65}
+.mcell.soon{background:var(--sun-soft);border-color:#F5DC8E}
+.mcell:hover{border-color:var(--sky)}
+.sheet .box{max-width:400px;text-align:left}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.sheet .sh h3{margin:0;font-family:"Baloo 2",sans-serif;font-size:1.5rem;text-align:center;flex:1}
+.sheet .sh button{width:40px;height:40px;padding:0;border-radius:50%;font-size:1.2rem}
+.sheet .when{text-align:center;color:var(--muted);font-weight:700;font-size:.9rem;margin-bottom:12px}
+.sheet .who{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.sheet .wrow{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:16px;padding:8px 12px}
+.sheet .wrow .ava{width:42px;height:42px;font-size:1.5rem}
+.sheet .wrow .nm{flex:1;font-weight:800;line-height:1.2}
+.sheet .wrow .nm small{display:block;color:var(--grass);font-size:.9rem}
+.sheet .none{text-align:center;color:var(--muted);padding:16px 0;font-weight:700}
+.st{flex:none;font-size:.75rem;font-weight:800;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.st.ok{background:var(--grass-soft);color:var(--grass)}
+.st.wait{background:var(--sun-soft);color:#8a6200}
+.st.none{background:var(--soft);color:var(--muted)}
+.kid .nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kid .nm .st{font-size:.66rem;padding:1px 7px}
+.pend{display:inline-block;font-size:.68rem;font-weight:800;background:var(--sun-soft);color:#8a6200;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+body.viewer .admin-only{display:none!important}
+body.viewer .hitem{grid-template-columns:1fr}
+body.viewer .kid .saved input{pointer-events:none;background:transparent;border-color:transparent}
+.viewbar.adm{background:var(--grass)}
+@keyframes blink{50%{opacity:.2}}
+#pendDot{color:var(--sun);font-size:1rem}
+.sched{width:100%;max-width:620px;display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow:auto}
+.srow{display:flex;align-items:center;gap:10px;background:var(--sun-soft);border:2px solid var(--sun);border-radius:14px;padding:6px 12px;text-align:left}
+.srow b{flex:none;width:58px;font-size:.9rem}
+.srow .sw{display:flex;flex-wrap:wrap;gap:2px 14px;font-weight:800;font-size:.95rem}
+.loading>div{max-width:360px}
+.actions{align-items:stretch!important}
+.actions .primary{white-space:normal;line-height:1.1;font-size:clamp(1rem,3.8vw,1.4rem);padding:10px 12px;flex:1 1 0;max-width:280px;min-width:0;min-height:58px}
+#draw.primary{background:var(--grass);color:#fff;box-shadow:0 6px 0 #1B7F45}
+#draw.primary:active{box-shadow:0 2px 0 #1B7F45}
+
+/* ===== agenda cartoon ===== */
+.year{flex:none;background:#FFF6DC;border:3px solid var(--ink);border-radius:26px;box-shadow:0 6px 0 var(--ink);padding:14px 12px 18px;gap:14px}
+.year .yh span{font-family:"Baloo 2",sans-serif;font-size:2rem;font-weight:800;line-height:1;background:var(--sun);border:3px solid var(--ink);border-radius:14px;padding:4px 18px;box-shadow:0 4px 0 var(--ink);transform:rotate(-2deg)}
+.year .yh button{width:42px;height:42px;border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink);font-size:1.3rem}
+.months{flex:none;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:auto;gap:18px 12px;padding-top:8px}
+@media (min-width:760px){.months{grid-template-columns:repeat(4,1fr)}}
+.mcell{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;min-height:118px;padding:0;background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);transition:transform .12s,box-shadow .12s;overflow:visible;opacity:1}
+.mcell:nth-child(odd){transform:rotate(-1.3deg)}
+.mcell:nth-child(even){transform:rotate(1.1deg)}
+.mcell:hover{transform:translateY(-3px) rotate(0);border-color:var(--ink)}
+.mcell:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.mcell .rings{position:absolute;top:-10px;left:0;right:0;display:flex;justify-content:space-around;pointer-events:none}
+.mcell .rings i{width:9px;height:18px;border-radius:6px;background:#fff;border:2.5px solid var(--ink)}
+.mcell .mh{display:block;background:var(--c);color:#fff;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:.95rem;line-height:1.1;padding:10px 4px 5px;border-bottom:3px solid var(--ink);border-radius:12px 12px 0 0;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.mcell .mb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px 8px}
+.mcell .fs{font-size:1.7rem;line-height:1.1}
+.mcell .ns{font-weight:800;font-size:.78rem;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcell .st{font-size:.62rem;padding:1px 7px;border:2px solid var(--ink)}
+.mcell .empty-m{font-size:1.4rem;color:var(--muted);opacity:.6}
+.mcell.done{background:#E9FBEF}
+.mcell.soon{background:#FFFBEA}
+.mcell.past{opacity:.5}
+.mcell.now{box-shadow:0 5px 0 var(--ink),0 0 0 4px var(--red)}
+.mcell .hoje{position:absolute;bottom:-10px;right:-8px;background:var(--red);color:#fff;font-weight:800;font-size:.66rem;border:2px solid var(--ink);border-radius:999px;padding:1px 8px;transform:rotate(8deg)}
+.names li .st{flex:none}
+@media (prefers-reduced-motion:reduce){.mcell,.mcell:nth-child(odd),.mcell:nth-child(even){transform:none}}
+.mcell.off{background:#EEF1F5!important;opacity:.55;cursor:default;filter:grayscale(.9)}
+.mcell.off:hover,.mcell.off:active{transform:none;box-shadow:0 5px 0 var(--ink)}
+.mcell .empty-m{font-size:.72rem;font-weight:800}
+.mcell .mh small{display:block;font-size:.72rem;opacity:.95;margin-top:1px}
+.year .yh span{font-size:1.35rem!important;padding:6px 14px!important}
+.year .yh button:disabled{opacity:.3;cursor:default}
+</style>
+
+</head>
+<body>
+<div class="loading" id="loading"><div><p id="loadMsg">Carregando…</p><div id="loadPick" hidden><p class="sub">Coloque o arquivo na mesma pasta do app ou escolha o arquivo aqui.</p><div class="backup" style="margin-top:12px"><button id="loadPickBtn">Escolher arquivo</button><button id="loadAdminBtn">Administrador</button></div></div></div></div>
+<input type="file" id="pickFile" accept=".json,application/json" hidden>
+<div class="viewbar" id="viewbar"><span id="barText">Modo visualização</span><span id="barSep"> · </span><button id="lockBtn">🔒 Administrador</button><span id="pendDot" hidden title="Mudanças ainda não exportadas"> ●</span></div>
+<header class="topbar">
+  <button class="arrow" id="prev" aria-label="Tela anterior">‹</button>
+  <div class="navtitle" id="navTitle"></div>
+  <button class="arrow" id="next" aria-label="Próxima tela">›</button>
+</header>
+
+<main id="main">
+  <!-- Sortear (admin) -->
+  <section class="screen" data-title="Sortear" data-tab="Sortear" data-icon="🎁" data-admin>
+    <div class="stage" id="stage" aria-live="polite">
+      <div class="bgfill" id="bgfill"></div>
+      <canvas id="confetti" aria-hidden="true"></canvas>
+      <h2 class="big" id="title">Quem ganha este mês?</h2>
+      <div class="meta">
+        <div class="chip" id="period">—</div>
+        <div class="chip prize" id="prize">R$ 0,00</div>
+      </div>
+      <div class="slots" id="slots"></div>
+      <div class="stamp" id="stamp"></div>
+      <div class="progress">
+        <div class="ptext" id="ptext"></div>
+        <div class="pbar"><i id="pfill"></i></div>
+        <div class="faces" id="faces"></div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="draw">Sortear!</button>
+        <button class="primary" id="drawAll">Sortear o ciclo inteiro</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Agenda (todos) -->
+  <section class="screen" data-title="Agenda" data-tab="Agenda" data-icon="🗓️">
+    <div class="year">
+      <div class="yh"><button id="yPrev" aria-label="Ano anterior">‹</button><span id="yTitle"></span><button id="yNext" aria-label="Próximo ano">›</button></div>
+      <div class="months" id="months"></div>
+    </div>
+  </section>
+
+  <!-- Cofrinhos (todos) -->
+  <section class="screen" data-title="Cofrinhos" data-tab="Cofrinhos" data-icon="🐷">
+    <div class="legend"><b style="color:var(--ink)">Quem guardar mais vence!</b><span><i style="background:var(--grass-light)"></i>Recebeu</span><span><i style="background:var(--grass)"></i>Guardou</span></div>
+    <div class="kids" id="kids"></div>
+  </section>
+
+  <!-- Histórico (todos) -->
+  <section class="screen" data-title="Histórico" data-tab="Histórico" data-icon="📅">
+    <div class="head"><p class="sub" id="histCount"></p><button class="link admin-only" id="clearHist">Apagar histórico</button></div>
+    <div class="hlist" id="hlist"></div>
+    <div class="pager" id="pager" hidden><button id="hPrev" aria-label="Página anterior">‹</button><span id="hPage"></span><button id="hNext" aria-label="Próxima página">›</button></div>
+  </section>
+
+  <!-- Participantes (admin) -->
+  <section class="screen" data-title="Participantes" data-tab="Nomes" data-icon="👧" data-admin>
+    <div class="addrow">
+      <textarea id="newName" rows="1" placeholder="Nome e Enter (pode colar vários)"></textarea>
+      <button class="add" id="addBtn">Adicionar</button>
+    </div>
+    <ul class="names" id="names"></ul>
+    <div class="listbar"><span id="ncount">0 participantes</span><button class="link" id="clearNames">Limpar lista</button></div>
+  </section>
+
+  <!-- Ajustes (admin) -->
+  <section class="screen" data-title="Ajustes" data-tab="Ajustes" data-icon="⚙️" data-admin>
+    <div class="settings">
+      <div class="card">
+        <h2>Prêmio</h2>
+        <div>
+          <label for="value">Valor do mês</label>
+          <div class="money"><span>R$</span><input id="value" inputmode="decimal" placeholder="0,00"></div>
+        </div>
+        <div class="seg" role="group" aria-label="Quantidade de ganhadores">
+          <button id="q1" aria-pressed="true">1 pessoa</button>
+          <button id="q2" aria-pressed="false">2 pessoas</button>
+        </div>
+        <div class="split" id="split"></div>
+      </div>
+      <div class="card">
+        <h2>Mês do sorteio</h2>
+        <div class="row">
+          <div><label for="month">Mês</label><select id="month"></select></div>
+          <div><label for="year">Ano</label><input id="year" type="number" min="2000" max="2100"></div>
+        </div>
+        <div><label for="drawDay">Dia em que o prêmio é liberado</label><input id="drawDay" type="number" min="1" max="28"></div>
+        <label class="check"><input type="checkbox" id="autoAdvance"> Passar para o próximo mês depois de cada sorteio</label>
+      </div>
+      <div class="card">
+        <h2>Ciclo</h2>
+        <label class="check"><input type="checkbox" id="cycleOn"> Cada um ganha uma vez antes de alguém repetir. A ordem muda em todo ciclo novo.</label>
+        <div class="cyclebox" id="cycleBox"><span id="cycleInfo"></span><button class="link blue" id="resetCycle">Novo ciclo</button></div>
+      </div>
+      <div class="card">
+        <h2>Visualização</h2>
+        <p class="sub">Sem a senha, o app abre só com Agenda, Cofrinhos e Histórico, sem poder mudar nada. Cada mês aparece no dia de liberar.</p>
+        <button id="previewBtn">Ver como os participantes</button>
+      </div>
+      <div class="card">
+        <h2>Senha do administrador</h2>
+        <div class="addrow"><input id="newPass" type="password" inputmode="numeric" placeholder="Nova senha" autocomplete="new-password"><button class="add" id="savePass">Salvar</button></div>
+      </div>
+      <div class="card">
+        <h2>Backup</h2>
+        <div class="backup">
+          <button id="exportBtn">Exportar dados</button>
+          <button id="importBtn">Importar</button>
+        </div>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+        <div class="sync" id="sync">Salvo neste navegador</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs" aria-label="Menu"></nav>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalText">
+  <div class="box"><p id="modalText"></p><div class="btns"><button id="modalNo">Cancelar</button><button class="ok" id="modalYes">Confirmar</button></div></div>
+</div>
+<div class="modal" id="passModal" hidden role="dialog" aria-modal="true" aria-labelledby="passTitle">
+  <div class="box"><p id="passTitle">Senha do administrador</p><input id="passInput" type="password" inputmode="numeric" autocomplete="current-password" style="text-align:center;font-size:1.4rem;letter-spacing:.3em;margin-bottom:16px"><div class="btns"><button id="passNo">Cancelar</button><button class="ok" id="passOk">Entrar</button></div></div>
+</div>
+<div class="modal sheet" id="monthSheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="box">
+    <div class="sh"><button id="shPrev" aria-label="Mês anterior">‹</button><h3 id="shTitle"></h3><button id="shNext" aria-label="Próximo mês">›</button></div>
+    <div class="when" id="shWhen"></div>
+    <div class="who" id="shWho"></div>
+    <button id="shClose" style="width:100%">Fechar</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const MES3=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const BICHOS=["🦊","🐼","🐯","🐸","🐵","🦁","🐨","🐰","🐶","🐱","🦄","🐙","🐢","🐧","🦉","🐳","🦖","🐝","🐮","🐷","🦒","🐻","🦋","🐬"];
+const $=id=>document.getElementById(id);
+const KEY="sorteio-v5";
+const now0=new Date();
+const DEFAULT={names:[],avatars:{},value:"",qty:1,month:now0.getMonth(),year:now0.getFullYear(),drawDay:1,autoAdvance:true,cycleOn:true,cycle:{number:1,won:[],prev:[]},adjust:{},history:[],adminHash:"",updatedAt:0};
+let state=JSON.parse(JSON.stringify(DEFAULT));
+let mode="admin", preview=false, rolling=false, shared=null, saveTimer=null, screen=0, hPage=0, yearShown=now0.getFullYear();
+const isViewer=()=>mode==="view"||preview;
+
+MESES.forEach((m,i)=>{const o=document.createElement("option");o.value=i;o.textContent=m;$("month").appendChild(o)});
+
+/* ---------- janela de confirmação ---------- */
+function ask(msg,ok="Confirmar",danger=false){
+  return new Promise(res=>{
+    const m=$("modal"),y=$("modalYes"),n=$("modalNo");
+    $("modalText").textContent=msg;y.textContent=ok;y.classList.toggle("danger",danger);m.hidden=false;y.focus();
+    const close=v=>{m.hidden=true;y.onclick=n.onclick=m.onclick=null;document.removeEventListener("keydown",esc);res(v)};
+    const esc=e=>{if(e.key==="Escape")close(false)};
+    y.onclick=()=>close(true);n.onclick=()=>close(false);m.onclick=e=>{if(e.target===m)close(false)};
+    document.addEventListener("keydown",esc);
+  });
+}
+
+/* ---------- utilidades ---------- */
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),3400)}
+function num(v){const s=String(v??"").trim();const n=parseFloat(s.includes(",")?s.replace(/\./g,"").replace(",","."):s);return isNaN(n)?0:n}
+function brl(n){return (+n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+function shares(total,qty){const c=Math.round(total*100);if(qty===1)return[c/100];const a=Math.ceil(c/2);return[a/100,(c-a)/100]}
+function refText(m=state.month,y=state.year){return `${MESES[m]} / ${y||""}`}
+function plural(n){return `${n} participante${n===1?"":"s"}`}
+function randInt(max){const a=new Uint32Array(1);const lim=Math.floor(0x100000000/max)*max;do{crypto.getRandomValues(a)}while(a[0]>=lim);return a[0]%max}
+function eq(a,b){return String(a).toLowerCase()===String(b).toLowerCase()}
+function key(n){return String(n).toLowerCase()}
+function hash(n){let h=0;for(const ch of key(n))h=(h*31+ch.codePointAt(0))>>>0;return h}
+function dateBR(d){return d.toLocaleDateString("pt-BR")}
+function today(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function day(){return Math.min(28,Math.max(1,+state.drawDay||1))}
+
+/* ---------- liberação por data ---------- */
+function releaseDate(h){return (h.month==null||!h.year)?null:new Date(h.year,h.month,day())}
+function released(h){const d=releaseDate(h);return !d||today()>=d}
+function visibleHistory(){return isViewer()?state.history.filter(released):state.history}
+function sortByRef(a,b){return (b.year||0)-(a.year||0)||(b.month??0)-(a.month??0)}
+
+function ensureAvatars(){
+  const used=new Set();
+  state.names.forEach(n=>{const a=state.avatars[key(n)];if(a&&!used.has(a))used.add(a);else delete state.avatars[key(n)]});
+  state.names.forEach(n=>{
+    if(state.avatars[key(n)])return;
+    let i=hash(n)%BICHOS.length,t=0;
+    while(used.has(BICHOS[i])&&t<BICHOS.length){i=(i+1)%BICHOS.length;t++}
+    state.avatars[key(n)]=BICHOS[i];used.add(BICHOS[i]);
+  });
+}
+function ava(n){return state.avatars[key(n)]||BICHOS[hash(n)%BICHOS.length]}
+function hasWon(n){return state.cycle.won.some(w=>eq(w,n))}
+function eligible(){return state.cycleOn?state.names.filter(n=>!hasWon(n)):[...state.names]}
+
+function sanitize(s){
+  const out=JSON.parse(JSON.stringify(DEFAULT));
+  if(Array.isArray(s.names))out.names=s.names.map(x=>String(x).trim()).filter(Boolean);
+  if(s.avatars&&typeof s.avatars==="object")for(const k in s.avatars)out.avatars[key(k)]=String(s.avatars[k]);
+  if(s.value!=null)out.value=String(s.value);
+  out.qty=+s.qty===2?2:1;
+  if(Number.isInteger(+s.month)&&+s.month>=0&&+s.month<12)out.month=+s.month;
+  if(s.year)out.year=+s.year;
+  if(s.drawDay)out.drawDay=Math.min(28,Math.max(1,+s.drawDay||1));
+  if(s.autoAdvance!=null)out.autoAdvance=!!s.autoAdvance;
+  if(s.cycleOn!=null)out.cycleOn=!!s.cycleOn;
+  if(s.cycle&&typeof s.cycle==="object"){out.cycle.number=Math.max(1,+s.cycle.number||1);out.cycle.won=Array.isArray(s.cycle.won)?s.cycle.won.map(String):[];out.cycle.prev=Array.isArray(s.cycle.prev)?s.cycle.prev.map(String):[]}
+  if(Array.isArray(s.history))out.history=s.history.filter(h=>h&&(h.winners||h.winner)).map(h=>{
+    const winners=Array.isArray(h.winners)?h.winners.map(w=>({name:String(w.name||w),amount:+w.amount||0})):[{name:String(h.winner),amount:num(String(h.value||"").replace(/[R$\s\u00a0]/g,""))}];
+    return{id:String(h.id||Date.now()+Math.random()),winners,total:+h.total||winners.reduce((a,w)=>a+w.amount,0),
+      month:Number.isInteger(+h.month)&&h.month!==null?+h.month:null,year:+h.year||null,reference:String(h.reference||h.period||""),
+      cycle:+h.cycle||null,count:+h.count||0,date:String(h.date||""),when:String(h.when||"")};
+  });
+  if(s.adjust&&typeof s.adjust==="object")for(const k in s.adjust)out.adjust[k]=num(s.adjust[k]);
+  else if(s.saved&&typeof s.saved==="object")for(const k in s.saved){
+    const v=num(s.saved[k]);if(!v)continue;
+    const rec=out.history.reduce((a,h)=>a+h.winners.filter(w=>eq(w.name,k)).reduce((b,w)=>b+w.amount,0),0);
+    out.adjust[k]=Math.round((v-rec)*100)/100;
+  }
+  if(s.adminHash)out.adminHash=String(s.adminHash);
+  if(!out.history.length){out.cycle={number:1,won:[],prev:[]};out.adjust={}}
+  out.updatedAt=+s.updatedAt||Date.now();
+  return out;
+}
+
+/* ---------- salvar / carregar ---------- */
+const DATA_FILE="sorteio-dados.json";
+const LOCAL=location.protocol==="file:"; // aberto direto do computador
+const DEFAULT_PASS="1234";
+let pub=null; // dados publicados (arquivo JSON ao lado do app)
+function passHash(p){let h=0x811c9dc5;for(const ch of "cofrinho:"+p){h^=ch.codePointAt(0);h=Math.imul(h,0x01000193)>>>0}return h.toString(16)}
+function setSync(){
+  const pend=pub?state.updatedAt>pub.updatedAt:true;
+  $("sync").innerHTML=pend?`<b style="color:var(--coral)">Há mudanças que os participantes ainda não veem.</b> Exporte e substitua o arquivo <b>${DATA_FILE}</b> na pasta do app.`:`Os participantes estão vendo a versão atual.`;
+  $("pendDot").hidden=!pend;
+}
+function save(){
+  if(isViewer())return;
+  state.updatedAt=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+  setSync();
+}
+function loadLocal(){
+  try{const s=localStorage.getItem(KEY)||localStorage.getItem("sorteio-v4")||localStorage.getItem("sorteio-v3");if(s)return sanitize(JSON.parse(s))}catch(e){}
+  return null;
+}
+function showLoading(msg,pick){const l=$("loading");l.hidden=!msg;if(!msg)return;$("loadMsg").textContent=msg;$("loadPick").hidden=!pick}
+async function fetchPublished(){
+  try{const r=await fetch(DATA_FILE+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;return sanitize(await r.json())}catch(e){return null}
+}
+function useViewerData(){
+  mode="view";state=pub?JSON.parse(JSON.stringify(pub)):sanitize({});ensureAvatars();
+  sessionStorage.removeItem("sorteio-admin");
+}
+async function init(){
+  pub=await fetchPublished();
+  if(LOCAL&&sessionStorage.getItem("sorteio-admin")==="1"){enterAdmin();start();return}
+  if(!pub){
+    const local=loadLocal();
+    if(local){pub=null;useViewerData();state=local;ensureAvatars();start();toast(`Arquivo ${DATA_FILE} não encontrado. Mostrando os dados deste aparelho.`);return}
+    if(LOCAL){bindLock();useViewerData();start();unlock();return} // no computador: pede a senha direto
+    showLoading(`Não foi possível carregar o sorteio agora. Tente abrir de novo daqui a pouco.`,false);return;
+  }
+  useViewerData();start();
+}
+function enterAdmin(){
+  mode="admin";preview=false;sessionStorage.setItem("sorteio-admin","1");
+  const local=loadLocal();
+  state=local&&(!pub||local.updatedAt>=pub.updatedAt)?local:(pub?JSON.parse(JSON.stringify(pub)):sanitize({}));
+  ensureAvatars();
+}
+async function unlock(){
+  const p=await askPass();if(p==null)return;
+  const target=(pub&&pub.adminHash)||state.adminHash||passHash(DEFAULT_PASS);
+  if(passHash(p)!==target){toast("Senha incorreta");return}
+  enterAdmin();showLoading("");applyMode();renderAll();toast("Modo administrador liberado");
+}
+function lock(){useViewerData();applyMode();renderAll();toast("Modo visualização")}
+let lockBound=false;
+function bindLock(){
+  if(lockBound)return;lockBound=true;
+  $("lockBtn").onclick=()=>isViewer()&&!preview?unlock():preview?(preview=false,applyMode()):lock();
+  $("loadPickBtn").onclick=()=>$("pickFile").click();
+  $("loadAdminBtn").onclick=unlock;
+  $("pickFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{pub=sanitize(JSON.parse(r.result));useViewerData();start()}catch(_){toast("Arquivo inválido")}};r.readAsText(f)};
+}
+function askPass(){
+  return new Promise(res=>{
+    const m=$("passModal"),i=$("passInput");i.value="";m.hidden=false;setTimeout(()=>i.focus(),50);
+    const close=v=>{m.hidden=true;$("passOk").onclick=$("passNo").onclick=i.onkeydown=null;res(v)};
+    $("passOk").onclick=()=>close(i.value);$("passNo").onclick=()=>close(null);
+    i.onkeydown=e=>{if(e.key==="Enter")close(i.value);if(e.key==="Escape")close(null)};
+  });
+}
+function start(){showLoading("");bindConfig();bindLock();applyMode();renderAll()}
+
+/* ---------- modos e navegação ---------- */
+const allScreens=[...document.querySelectorAll(".screen")];
+let screens=[];
+function applyMode(){
+  document.body.classList.toggle("viewer",isViewer());
+  $("barText").textContent=preview?"Prévia do modo visualização":isViewer()?"Modo visualização":"Modo administrador";
+  $("lockBtn").textContent=preview?"voltar para administrador":isViewer()?"🔒 Administrador":"🔓 Bloquear";
+  $("lockBtn").hidden=isViewer()&&!preview&&!LOCAL;$("barSep").hidden=$("lockBtn").hidden; // no site não existe acesso de administrador
+  $("viewbar").classList.toggle("adm",!isViewer());if(!isViewer())setSync();
+  screens=allScreens.filter(s=>!(isViewer()&&s.hasAttribute("data-admin")));
+  allScreens.forEach(s=>{if(!screens.includes(s))s.classList.remove("on")});
+  const tabs=$("tabs");tabs.innerHTML="";tabs.style.gridTemplateColumns=`repeat(${screens.length},1fr)`;
+  screens.forEach((s,i)=>{const b=document.createElement("button");b.innerHTML=`<span aria-hidden="true">${s.dataset.icon}</span>${s.dataset.tab}`;b.onclick=()=>go(i);tabs.appendChild(b)});
+  go(0,true);
+}
+function cur(){return screens[screen]?.dataset.title}
+function go(i,force){
+  if(rolling&&!force)return;
+  i=(i+screens.length)%screens.length;
+  screens.forEach((s,k)=>{s.classList.toggle("on",k===i);s.classList.toggle("left",k<i)});
+  [...$("tabs").children].forEach((b,k)=>b.setAttribute("aria-current",k===i?"page":"false"));
+  $("navTitle").textContent=screens[i].dataset.title;
+  screen=i;renderScreen();
+}
+function renderScreen(){const t=cur();if(t==="Agenda")renderAgenda();if(t==="Cofrinhos")renderKids();if(t==="Histórico")renderHistory()}
+$("prev").onclick=()=>go(screen-1);$("next").onclick=()=>go(screen+1);
+$("previewBtn").onclick=()=>{preview=true;applyMode();toast("Assim os participantes veem o app")};
+let tx=null,ty=null;
+$("main").addEventListener("touchstart",e=>{if(e.target.closest("input,textarea,select,.names,.kids"))return tx=null;tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+$("main").addEventListener("touchend",e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.5)go(screen+(dx<0?1:-1));tx=null},{passive:true});
+
+/* ---------- participantes ---------- */
+function addNames(text){
+  let added=0,dup=0;
+  text.split(/\r?\n|;/).map(n=>n.trim()).filter(Boolean).forEach(n=>{
+    if(state.names.some(x=>eq(x,n))){dup++;return}
+    state.names.push(n);added++;
+  });
+  if(added){ensureAvatars();save();renderAll()}
+  if(dup)toast(dup===1?"Esse nome já está na lista":`${dup} nomes repetidos foram ignorados`);
+  else if(added>1)toast(`${added} nomes adicionados`);
+}
+function renameEverywhere(oldN,newN){
+  const m=a=>a.map(w=>eq(w,oldN)?newN:w);
+  state.cycle.won=m(state.cycle.won);state.cycle.prev=m(state.cycle.prev);
+  const k=Object.keys(state.adjust).find(k=>eq(k,oldN));if(k!=null){const v=state.adjust[k];delete state.adjust[k];state.adjust[newN]=v}
+  if(state.avatars[key(oldN)]){const a=state.avatars[key(oldN)];delete state.avatars[key(oldN)];state.avatars[key(newN)]=a}
+  state.history.forEach(h=>h.winners.forEach(w=>{if(eq(w.name,oldN))w.name=newN}));
+}
+function renderNames(){
+  const ul=$("names");ul.innerHTML="";
+  $("ncount").textContent=plural(state.names.length);
+  if(!state.names.length){ul.innerHTML='<li class="empty">Nenhum participante ainda</li>';return}
+  state.names.forEach((n,i)=>{
+    const mine=state.history.filter(h=>(!state.cycleOn||h.cycle===state.cycle.number)&&h.winners.some(w=>eq(w.name,n)));
+    const pend=mine.filter(h=>!released(h)).sort((a,b)=>-sortByRef(a,b))[0],got=mine.find(released);
+    const tag=pend?`<span class="st wait">A receber · ${MES3[pend.month]}</span>`:got?'<span class="st ok">Recebeu</span>':"";
+    const li=document.createElement("li");
+    li.innerHTML=`<span class="ava"></span><input aria-label="Nome ${i+1}">${tag}<button class="x" aria-label="Remover">✕</button>`;
+    li.querySelector(".ava").textContent=ava(n);
+    const inp=li.querySelector("input");inp.value=n;
+    inp.addEventListener("change",()=>{
+      const v=inp.value.trim();
+      if(!v){inp.value=n;remove(i);return}
+      if(state.names.some((x,j)=>j!==i&&eq(x,v))){toast("Esse nome já está na lista");inp.value=n;return}
+      renameEverywhere(n,v);state.names[i]=v;save();renderAll();
+    });
+    li.querySelector(".x").onclick=()=>remove(i);
+    ul.appendChild(li);
+  });
+}
+async function remove(i){const n=state.names[i];if(!await ask(`Tirar ${n} da lista?`,"Tirar",true))return;state.names.splice(i,1);state.cycle.won=state.cycle.won.filter(w=>!eq(w,n));save();renderAll()}
+$("addBtn").onclick=()=>{const t=$("newName");addNames(t.value);t.value="";t.focus()};
+$("newName").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("addBtn").click()}});
+$("newName").addEventListener("paste",e=>{const txt=(e.clipboardData||window.clipboardData).getData("text");if(/\n/.test(txt)){e.preventDefault();addNames(txt)}});
+$("clearNames").onclick=async()=>{if(!state.names.length)return;if(await ask("Remover todos os participantes da lista?","Remover",true)){state.names=[];state.cycle.won=[];save();renderAll()}};
+
+/* ---------- ajustes ---------- */
+let bound=false;
+function bindConfig(){
+  if(bound)return;bound=true;
+  $("value").oninput=()=>{state.value=$("value").value;save();refresh();idleSlots()};
+  $("q1").onclick=()=>setQty(1);$("q2").onclick=()=>setQty(2);
+  const pickMonth=()=>{const m=+$("month").value,y=+$("year").value||state.year;
+    if(taken(m,y)){toast(`${MESES[m]}/${y} já foi sorteado. Escolha outro mês ou exclua o sorteio no Histórico.`);fillConfig();return}
+    state.month=m;state.year=y;save();refresh();idleSlots()};
+  $("month").onchange=pickMonth;$("year").onchange=pickMonth;
+  $("drawDay").onchange=()=>{state.drawDay=Math.min(28,Math.max(1,+$("drawDay").value||1));$("drawDay").value=state.drawDay;save();refresh()};
+  $("autoAdvance").onchange=()=>{state.autoAdvance=$("autoAdvance").checked;save()};
+  $("cycleOn").onchange=()=>{state.cycleOn=$("cycleOn").checked;save();renderAll()};
+  $("resetCycle").onclick=async()=>{if(await ask("Começar um novo ciclo agora? Todos voltam a participar.","Começar")){startNewCycle();save();renderAll();toast(`Ciclo ${state.cycle.number} começou`)}};
+}
+function setQty(q){if(rolling)return;state.qty=q;save();refresh();idleSlots()}
+function fillConfig(){$("value").value=state.value;$("month").value=state.month;$("year").value=state.year;$("drawDay").value=day();$("autoAdvance").checked=state.autoAdvance;$("cycleOn").checked=state.cycleOn}
+function refresh(){
+  const n=state.names.length, el=eligible().length, total=num(state.value);
+  $("prize").textContent=brl(total);$("period").textContent=refText();
+  $("title").textContent=state.qty===2?"Sorteados!":"Quem ganha este mês?";
+  $("q1").setAttribute("aria-pressed",state.qty===1);$("q2").setAttribute("aria-pressed",state.qty===2);
+  const sh=shares(total,state.qty);
+  $("split").innerHTML=state.qty===2?`Cada um recebe <b>${brl(sh[0])}</b>${sh[0]!==sh[1]?` e <b>${brl(sh[1])}</b>`:""}`:`O ganhador recebe <b>${brl(sh[0])}</b>`;
+  $("cycleBox").hidden=!state.cycleOn;
+  $("cycleInfo").textContent=`Ciclo ${state.cycle.number}: ${state.cycle.won.length} já ganhou, ${el} falta${el===1?"":"m"}`;
+  $("draw").disabled=$("drawAll").disabled=rolling||n<Math.max(2,state.qty+1);
+  if(!rolling)$("draw").textContent=`Sortear ${MESES[state.month]}!`;
+  $("draw").title=`Sorteia quem recebe em ${MESES[state.month]}/${state.year} (libera em ${dateBR(new Date(state.year,state.month,day()))})`;
+  renderProgress();
+}
+
+/* ---------- progresso ---------- */
+function cycleFrom(hist){ // ciclo calculado por uma lista de sorteios
+  const hs=[...hist].filter(h=>h.cycle);
+  if(!hs.length)return{number:1,won:[]};
+  const curC=Math.max(...hs.map(h=>h.cycle));
+  return{number:curC,won:hs.filter(h=>h.cycle===curC).flatMap(h=>h.winners.map(w=>w.name)).filter(n=>state.names.some(x=>eq(x,n)))};
+}
+function progressInfo(won,number,hist){
+  if(state.cycleOn){const total=state.names.length,done=Math.min(total,won.length);return{pct:total?done/total*100:0,text:`Ciclo ${number}: ${done} de ${total} já ganharam`}}
+  const y=today().getFullYear(),done=new Set(hist.filter(h=>h.year===y).map(h=>h.month)).size;
+  return{pct:done/12*100,text:`${y}: ${done} de 12 meses sorteados`};
+}
+function renderProgress(){
+  const p=progressInfo(state.cycle.won.filter(w=>state.names.some(n=>eq(n,w))),state.cycle.number,state.history);
+  $("ptext").textContent=p.text;$("pfill").style.width=p.pct+"%";$("bgfill").style.width=p.pct+"%";
+  const faces=$("faces");faces.innerHTML="";
+  if(state.cycleOn)state.names.forEach(n=>{const s=document.createElement("span");s.textContent=ava(n);s.title=n;if(hasWon(n))s.className="lit";faces.appendChild(s)});
+}
+
+/* ---------- palco ---------- */
+function idleSlots(){
+  if(rolling)return;
+  const sh=shares(num(state.value),state.qty);
+  const box=$("slots");box.className="slots"+(state.qty===2?" two":"");box.innerHTML="";
+  for(let i=0;i<state.qty;i++){
+    box.insertAdjacentHTML("beforeend",`<div class="window"><p class="label">${state.qty===2?`${i+1}º sortudo`:`Recebe em ${MESES[state.month]}`}</p><p class="face">🎁</p><p class="winner">?</p><p class="amount">${brl(sh[i])}</p></div>`);
+  }
+  $("stamp").textContent="";
+}
+
+/* ---------- ciclo com ordem sempre diferente ---------- */
+function startNewCycle(){state.cycle={number:state.cycle.number+1,won:[],prev:state.cycle.won.length?[...state.cycle.won]:state.cycle.prev}}
+function pickWinners(){
+  const q=state.qty, picked=[];let newCycle=false;
+  while(picked.length<q){
+    let pool=eligible().filter(n=>!picked.some(p=>eq(p,n)));
+    if(!pool.length){
+      if(!state.cycleOn)break;
+      newCycle=true;startNewCycle();
+      pool=state.names.filter(n=>!picked.some(p=>eq(p,n)));
+      if(!pool.length)break;
+    }
+    let candidates=pool;
+    if(state.cycleOn&&state.cycle.prev.length){
+      const pos=state.cycle.won.length,avoid=[];
+      if(state.cycle.prev[pos])avoid.push(state.cycle.prev[pos]);
+      if(pos<q)avoid.push(...state.cycle.prev.slice(-q));
+      const f=pool.filter(n=>!avoid.some(a=>eq(a,n)));if(f.length)candidates=f;
+    }
+    const w=candidates[randInt(candidates.length)];picked.push(w);if(state.cycleOn)state.cycle.won.push(w);
+  }
+  return{picked,newCycle};
+}
+function rebuildCycle(){
+  const hs=[...state.history].reverse().filter(h=>h.cycle);
+  if(!hs.length){state.cycle={number:1,won:[],prev:[]};return}
+  const c=Math.max(...hs.map(h=>h.cycle));
+  const of=k=>hs.filter(h=>h.cycle===k).flatMap(h=>h.winners.map(w=>w.name)).filter(n=>state.names.some(x=>eq(x,n)));
+  state.cycle={number:c,won:of(c),prev:of(c-1)};
+}
+
+/* ---------- sorteio ---------- */
+function draw(){
+  if(isViewer()||rolling||cur()!=="Sortear"||state.names.length<Math.max(2,state.qty+1))return;
+  const all=[...state.names],cycleBefore=state.cycle.number,prevWon=[...state.cycle.won];
+  const {picked,newCycle}=pickWinners();if(!picked.length)return;
+  const after=JSON.parse(JSON.stringify(state.cycle));
+  state.cycle.won=newCycle?[]:prevWon;idleSlots();rolling=true;refresh();state.cycle=after;
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wins=[...document.querySelectorAll("#slots .winner")];
+  wins.forEach(w=>{w.classList.add("rolling");w.parentElement.classList.add("spinning");w.parentElement.querySelector(".label").textContent="Sorteando…"});
+  let done=0;
+  wins.forEach((w,k)=>{
+    const face=w.parentElement.querySelector(".face");
+    const total=reduce?1:34+k*16;let step=0,last=-1;
+    (function tick(){
+      if(step<total-1){let i;do{i=randInt(all.length)}while(all.length>1&&i===last);last=i;w.textContent=all[i];face.textContent=ava(all[i]);w.classList.remove("tick");void w.offsetWidth;w.classList.add("tick");step++;setTimeout(tick,40+Math.pow(step/total,3)*430)}
+      else{reveal(w,face,picked[k],k);if(++done===wins.length)finish(picked,all.length,newCycle,cycleBefore)}
+    })();
+  });
+}
+function reveal(w,face,name,k){
+  w.textContent=name;face.textContent=ava(name);w.classList.remove("rolling","tick");
+  const win=w.parentElement;win.classList.remove("spinning");
+  [w,face].forEach(el=>{el.classList.remove("pop","revealIn");void el.offsetWidth;el.classList.add("revealIn")});
+  win.classList.add("won");
+  win.querySelector(".label").textContent=state.qty===2?`🎉 ${k+1}º sortudo`:"🎉 Parabéns!";
+  celebrate();
+}
+function finish(picked,count,newCycle,cycleBefore){
+  const total=num(state.value),sh=shares(total,picked.length),d=new Date();
+  const when=dateBR(d)+" às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  const entry={id:String(d.getTime()),winners:picked.map((n,i)=>({name:n,amount:sh[i]})),total,month:state.month,year:state.year,
+    reference:refText(),cycle:state.cycleOn?state.cycle.number:null,count,date:d.toISOString(),when};
+  state.history.unshift(entry);
+  $("stamp").textContent=`Prêmio de ${refText()} · libera em ${dateBR(releaseDate(entry))}`;
+  document.querySelectorAll("#slots .window.won .label").forEach((l,k)=>l.textContent=`🎉 ${MESES[entry.month]}${picked.length>1?` · ${k+1}º`:""}`);
+  if(!released(entry))toast(`Resultado guardado. Os participantes veem a partir de ${dateBR(releaseDate(entry))}.`);
+  else if(newCycle)toast(`Todos já tinham ganhado no ciclo ${cycleBefore}. Começou o ciclo ${state.cycle.number}, com ordem nova!`);
+  else if(state.cycleOn&&!eligible().length)toast(`Ciclo ${state.cycle.number} completo! Todos ganharam uma vez.`);
+  const shown=refText();
+  if(state.autoAdvance){state.month++;if(state.month>11){state.month=0;state.year++}fillConfig()}
+  rolling=false;skipTaken();save();renderNames();refresh();hPage=0;
+}
+
+/* ---------- sortear o ciclo inteiro de uma vez ---------- */
+async function drawAll(){
+  if(isViewer()||rolling||state.names.length<Math.max(2,state.qty+1))return;
+  if(!state.cycleOn){toast("Ligue o ciclo em Ajustes para sortear todos os meses de uma vez");return}
+  if(!eligible().length)startNewCycle();
+  const months=Math.ceil(eligible().length/state.qty);
+  if(!await ask(`Sortear ${months} mese${months===1?"":"s"} de uma vez, a partir de ${refText()}? Cada participante ganha uma vez neste ciclo.`,"Sortear tudo"))return;
+  const wonBefore=state.cycle.won.length,entries=[],sh=shares(num(state.value),state.qty),d=new Date();
+  const when=dateBR(d)+" às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  const cyc=state.cycle.number;
+  for(let i=0;i<months&&eligible().length;i++){
+    const {picked}=pickWinners();
+    entries.push({id:String(d.getTime()+i),winners:picked.map((n,k)=>({name:n,amount:sh[k]})),total:num(state.value),month:state.month,year:state.year,
+      reference:refText(),cycle:cyc,count:state.names.length,date:d.toISOString(),when});
+    state.month++;if(state.month>11){state.month=0;state.year++}
+  }
+  rolling=true;$("draw").disabled=$("drawAll").disabled=true;
+  const box=$("slots");box.className="sched";box.innerHTML="";$("stamp").textContent="";
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const lit=new Set(state.cycle.won.slice(0,wonBefore).map(key));
+  const total=state.names.length;
+  for(const [i,e] of entries.entries()){
+    await new Promise(r=>setTimeout(r,reduce?50:1100));
+    const row=document.createElement("div");row.className="srow pop";
+    row.innerHTML=`<b></b><span class="sw"></span>`;row.querySelector("b").textContent=MES3[e.month]+"/"+String(e.year).slice(2);
+    e.winners.forEach(w=>{lit.add(key(w.name));const s=document.createElement("span");s.textContent=`${ava(w.name)} ${w.name} ${brl(w.amount)}`;row.querySelector(".sw").appendChild(s)});
+    box.appendChild(row);box.scrollTop=box.scrollHeight;
+    if(!noFx()){fxSize();const rr=row.getBoundingClientRect(),sr=$("stage").getBoundingClientRect();burst(rr.left-sr.left+rr.width/2,rr.top-sr.top+rr.height/2,40,null,5)}
+    const done=Math.min(total,lit.size);
+    $("ptext").textContent=`Ciclo ${cyc}: ${done} de ${total} já ganharam`;$("pfill").style.width=$("bgfill").style.width=(done/total*100)+"%";
+    [...$("faces").children].forEach((f,k)=>{if(lit.has(key(state.names[k])))f.className="lit"});
+  }
+  celebrate();
+  state.history.unshift(...entries.reverse());
+  $("stamp").textContent=`${entries.length} meses sorteados · cada um aparece no dia ${day()} do mês`;
+  rolling=false;skipTaken();save();renderNames();refresh();
+  $("draw").disabled=false;
+}
+
+/* ---------- confete ---------- */
+const FX={parts:[],balloons:[],run:false,c:null,ctx:null,w:0,h:0};
+const FXC=["#FFC83D","#2F80ED","#27AE60","#F2665A","#9B51E0","#FF8FB1","#00B8D9"];
+function noFx(){return matchMedia("(prefers-reduced-motion: reduce)").matches}
+function fxSize(){const c=$("confetti"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;FX.c=c;FX.ctx=c.getContext("2d");FX.w=r.width;FX.h=r.height;c.width=r.width*dpr;c.height=r.height*dpr;FX.ctx.setTransform(dpr,0,0,dpr,0,0)}
+function fxStart(){if(FX.run)return;FX.run=true;fxSize();requestAnimationFrame(fxLoop)}
+function fxLoop(){
+  const x=FX.ctx;x.clearRect(0,0,FX.w,FX.h);
+  FX.parts=FX.parts.filter(p=>p.life>0);
+  for(const p of FX.parts){
+    p.vy+=p.g;p.vx*=p.drag;p.vy*=p.drag;p.x+=p.vx;p.y+=p.vy;p.life--;p.a+=p.spin;
+    x.save();x.globalAlpha=Math.min(1,p.life/30);x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;
+    if(p.k==="spark"){x.beginPath();x.arc(0,0,p.s,0,7);x.fill()}else x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);
+    x.restore();
+  }
+  FX.balloons=FX.balloons.filter(b=>b.y>-120&&!b.popped);
+  for(const b of FX.balloons){
+    b.t+=.03;b.y-=b.v;b.x+=Math.sin(b.t)*.7;
+    if(b.popAt&&b.y<b.popAt){b.popped=true;burst(b.x,b.y,24,b.c,4);continue}
+    x.save();x.translate(b.x,b.y);
+    x.strokeStyle="rgba(31,42,68,.35)";x.lineWidth=1.2;x.beginPath();x.moveTo(0,b.r*1.2);x.quadraticCurveTo(Math.sin(b.t*2)*8,b.r*2,0,b.r*2.8);x.stroke();
+    x.fillStyle=b.c;x.beginPath();x.ellipse(0,0,b.r,b.r*1.2,0,0,7);x.fill();
+    x.beginPath();x.moveTo(-4,b.r*1.15);x.lineTo(4,b.r*1.15);x.lineTo(0,b.r*1.32);x.fill();
+    x.fillStyle="rgba(255,255,255,.45)";x.beginPath();x.ellipse(-b.r*.35,-b.r*.45,b.r*.18,b.r*.3,-.5,0,7);x.fill();
+    x.restore();
+  }
+  if(FX.parts.length||FX.balloons.length)requestAnimationFrame(fxLoop);else{FX.run=false;x.clearRect(0,0,FX.w,FX.h)}
+}
+function burst(px,py,n=70,color,speed=7){ // explosão de fogos
+  if(noFx())return;fxStart();
+  for(let i=0;i<n;i++){const a=Math.PI*2*i/n+Math.random()*.2,v=speed*(.5+Math.random()*.7);
+    FX.parts.push({k:"spark",x:px,y:py,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:.08,drag:.97,s:2+Math.random()*2.2,c:color||FXC[randInt(FXC.length)],life:60+randInt(40),a:0,spin:0})}
+}
+function confetti(n=150){
+  if(noFx())return;fxStart();
+  for(let i=0;i<n;i++)FX.parts.push({k:"paper",x:FX.w/2,y:FX.h*.42,vx:(Math.random()-.5)*15,vy:-Math.random()*13-4,g:.35,drag:.99,s:6+Math.random()*6,c:FXC[randInt(FXC.length)],life:130+randInt(40),a:Math.random()*6,spin:.2});
+}
+function balloons(n=12){
+  if(noFx())return;fxStart();
+  for(let i=0;i<n;i++){const r=16+Math.random()*12;
+    FX.balloons.push({x:FX.w*(.05+Math.random()*.9),y:FX.h+40+Math.random()*FX.h*.6,r,v:1.6+Math.random()*1.8,c:FXC[randInt(FXC.length)],t:Math.random()*6,popAt:Math.random()<.45?FX.h*(.1+Math.random()*.35):0})}
+}
+function flash(){if(noFx())return;const d=document.createElement("div");d.className="flash";$("stage").appendChild(d);setTimeout(()=>d.remove(),750);$("stage").classList.remove("shake");void $("stage").offsetWidth;$("stage").classList.add("shake")}
+function celebrate(){
+  flash();confetti();balloons();
+  if(noFx())return;
+  [0,350,700,1050].forEach((t,i)=>setTimeout(()=>{fxSize();burst(FX.w*(.2+Math.random()*.6),FX.h*(.15+Math.random()*.3))},t+200));
+}
+
+/* ---------- agenda ---------- */
+function nextDate(){const t=today();let d=new Date(t.getFullYear(),t.getMonth(),day());if(d<t)d=new Date(t.getFullYear(),t.getMonth()+1,day());return d}
+function entriesFor(y,m){return state.history.filter(h=>h.year===y&&h.month===m)}
+const MCOL=["#F2665A","#FF8FB1","#9B51E0","#2F80ED","#00B8D9","#27AE60","#7BC043","#F5A623","#FF7A45","#E5484D","#5B6CF0","#1F9D8B"];
+let agPage=0;
+function agStart(){ // primeiro mês do calendário: o primeiro sorteado ou, sem sorteios, o mês configurado
+  const ids=state.history.filter(h=>h.month!=null&&h.year).map(h=>h.year*12+h.month);
+  return ids.length?Math.min(...ids):state.year*12+state.month;
+}
+function agLast(){const ids=state.history.filter(h=>h.month!=null&&h.year).map(h=>h.year*12+h.month);return ids.length?Math.max(...ids):agStart()}
+function renderAgenda(){
+  const t=today(),tid=t.getFullYear()*12+t.getMonth(),start=agStart(),pages=Math.max(1,Math.ceil((agLast()-start+1)/12));
+  agPage=Math.min(Math.max(0,agPage),pages-1);
+  const first=start+agPage*12,lastId=first+11;
+  $("yTitle").textContent=`${MES3[first%12]}/${String(Math.floor(first/12)).slice(2)} – ${MES3[lastId%12]}/${String(Math.floor(lastId/12)).slice(2)}`;
+  $("yPrev").disabled=agPage===0;$("yNext").disabled=agPage>=pages-1;
+  const box=$("months");box.innerHTML="";
+  for(let k=0;k<12;k++){
+    const id=first+k,y=Math.floor(id/12),i=id%12;
+    const es=entriesFor(y,i),cell=document.createElement("button");cell.className="mcell";
+    const isNow=id===tid;
+    const relE=es.filter(released),hidE=es.filter(h=>!released(h));
+    if(!es.length){cell.disabled=true;cell.classList.add("off")}else cell.onclick=()=>openMonth(y,i);
+    if(relE.length)cell.classList.add("done");else if(hidE.length)cell.classList.add("soon");
+    if(isNow)cell.classList.add("now");
+    cell.style.setProperty("--c",MCOL[i]);
+    cell.innerHTML=`<span class="rings"><i></i><i></i></span><span class="mh">${MESES[i]}<small>${y}</small></span><span class="mb"></span>${isNow?'<span class="hoje">Hoje</span>':""}`;
+    const mb=cell.querySelector(".mb"),ws=es.flatMap(h=>h.winners);
+    if(ws.length){
+      const f=document.createElement("span");f.className="fs";f.textContent=ws.map(w=>ava(w.name)).join("");mb.appendChild(f);
+      const nm=document.createElement("span");nm.className="ns";nm.textContent=ws.map(w=>w.name).join(" e ");mb.appendChild(nm);
+      const st=document.createElement("span");st.className="st "+(relE.length?"ok":"wait");st.textContent=relE.length?"Recebeu":"A receber";mb.appendChild(st);
+    }else{const e=document.createElement("span");e.className="empty-m";e.textContent="Sem sorteio";mb.appendChild(e)}
+    cell.setAttribute("aria-label",`${MESES[i]} ${y}: `+(es.length?es.flatMap(h=>h.winners.map(w=>w.name)).join(", "):"sem sorteio"));
+    box.appendChild(cell);
+  }
+}
+/* resumo de um mês */
+let shY=0,shM=0;
+function openMonth(y,m){shY=y;shM=m;renderMonth();$("monthSheet").hidden=false;$("shClose").focus()}
+function renderMonth(){
+  {const ids=drawnIds(),cur=shY*12+shM;$("shPrev").disabled=!ids.some(x=>x<cur);$("shNext").disabled=!ids.some(x=>x>cur)}
+  const es=entriesFor(shY,shM),rd=new Date(shY,shM,day()),t=today(),dd=Math.round((rd-t)/864e5);
+  $("shTitle").textContent=`${MESES[shM]} ${shY}`;
+  $("shWhen").textContent=dd>0?`Recebe em ${dateBR(rd)} · faltam ${dd} dia${dd===1?"":"s"}`:dd===0?`Recebe hoje, ${dateBR(rd)} 🎉`:`Recebeu em ${dateBR(rd)}`;
+  const box=$("shWho");box.innerHTML="";
+  const ws=es.flatMap(h=>h.winners.map(w=>({...w,ok:released(h)})));
+  if(!ws.length){box.innerHTML=`<div class="none">${dd<0?"Não teve sorteio neste mês.":"Ainda não foi sorteado."}</div>`;return}
+  ws.forEach(w=>{const r=document.createElement("div");r.className="wrow";
+    r.innerHTML=`<span class="ava"></span><div class="nm"><span class="wn"></span><small></small></div><span class="st ${w.ok?"ok":"wait"}">${w.ok?"Recebeu":"A receber"}</span>`;
+    r.querySelector(".ava").textContent=ava(w.name);r.querySelector(".wn").textContent=w.name;r.querySelector("small").textContent=brl(w.amount);box.appendChild(r)});
+}
+function drawnIds(){return [...new Set(state.history.filter(h=>h.month!=null&&h.year).map(h=>h.year*12+h.month))].sort((a,b)=>a-b)}
+function shStep(d){const ids=drawnIds(),cur=shY*12+shM,nx=d>0?ids.find(x=>x>cur):[...ids].reverse().find(x=>x<cur);if(nx==null)return;shY=Math.floor(nx/12);shM=nx%12;renderMonth()}
+$("shPrev").onclick=()=>shStep(-1);$("shNext").onclick=()=>shStep(1);
+$("shClose").onclick=()=>{$("monthSheet").hidden=true;const pg=Math.floor((shY*12+shM-agStart())/12);if(pg!==agPage){agPage=pg;renderAgenda()}};
+$("monthSheet").onclick=e=>{if(e.target.id==="monthSheet")$("shClose").click()};
+document.addEventListener("keydown",e=>{if($("monthSheet").hidden)return;if(e.key==="Escape")$("shClose").click();if(e.key==="ArrowLeft")shStep(-1);if(e.key==="ArrowRight")shStep(1);e.stopImmediatePropagation()},true);
+$("yPrev").onclick=()=>{agPage--;renderAgenda()};$("yNext").onclick=()=>{agPage++;renderAgenda()};
+
+/* ---------- cofrinhos ---------- */
+const lastW={};
+function sumFor(n,hs){return hs.reduce((a,h)=>a+h.winners.filter(w=>eq(w.name,n)).reduce((b,w)=>b+w.amount,0),0)}
+function timesFor(n,hs){return hs.reduce((a,h)=>a+h.winners.filter(w=>eq(w.name,n)).length,0)}
+function adjOf(n){const k=Object.keys(state.adjust).find(k=>eq(k,n));return k?num(state.adjust[k]):0}
+function renderKids(){
+  const box=$("kids");box.innerHTML="";
+  if(!state.names.length){box.innerHTML='<p class="empty">Ainda não tem participantes.</p>';return}
+  const relH=state.history.filter(released),pendH=state.history.filter(h=>!released(h));
+  const rows=state.names.map(n=>{const rec=sumFor(n,relH);return{n,rec,sav:Math.round((rec+adjOf(n))*100)/100,t:timesFor(n,relH),pend:sumFor(n,pendH)}})
+    .sort((a,b)=>b.sav-a.sav||b.rec-a.rec||a.n.localeCompare(b.n));
+  const max=Math.max(1,...rows.map(r=>Math.max(r.rec,r.sav)));
+  const medals=["🥇","🥈","🥉"],anim=[];
+  rows.forEach(r=>{
+    const el=document.createElement("div");el.className="kid";
+    el.innerHTML=`<span class="ava"></span><div><div class="nm"></div><div class="kbar"><span class="rec"></span><span class="sav"></span></div><div class="info"></div></div><div class="saved"><label>Guardou R$</label><input inputmode="decimal" placeholder="0,00" aria-label="Quanto ${r.n} guardou"></div>`;
+    el.querySelector(".ava").textContent=ava(r.n);
+    const place=[...new Set(rows.map(x=>x.sav))].filter(v=>v>r.sav).length;
+    const nm=el.querySelector(".nm");nm.textContent=r.n+(r.sav>0&&place<3?" "+medals[place]:"");
+    const mine=state.history.filter(h=>h.winners.some(w=>eq(w.name,r.n))&&h.month!=null);
+    const nextP=mine.filter(h=>!released(h)).sort((a,b)=>-sortByRef(a,b))[0],lastR=mine.filter(released).sort(sortByRef)[0];
+    const st=document.createElement("span");
+    if(nextP){st.className="st wait";st.textContent=`A receber · ${MES3[nextP.month]}/${String(nextP.year).slice(2)}`}
+    else if(lastR){st.className="st ok";st.textContent=`Recebeu · ${MES3[lastR.month]}/${String(lastR.year).slice(2)}`}
+    else{st.className="st none";st.textContent="Aguardando sorteio"}
+    nm.appendChild(st);
+    const rec=el.querySelector(".rec"),sav=el.querySelector(".sav"),k=key(r.n),wr=r.rec/max*100,ws=Math.max(0,r.sav)/max*100;
+    rec.style.width=(lastW[k]?.r??0)+"%";sav.style.width=(lastW[k]?.s??0)+"%";
+    anim.push(()=>{rec.style.width=wr+"%";sav.style.width=ws+"%"});lastW[k]={r:wr,s:ws};
+    const d=adjOf(r.n);
+    el.querySelector(".info").textContent=[r.rec?`recebeu ${brl(r.rec)}`:"",d<0?`gastou ${brl(-d)}`:d>0?`+${brl(d)} extra`:"",r.pend?`a receber ${brl(r.pend)}`:""].filter(Boolean).join(" · ")||"ainda não ganhou";
+    const inp=el.querySelector("input");inp.value=r.sav?r.sav.toLocaleString("pt-BR",{minimumFractionDigits:2}):"";
+    if(isViewer()){inp.readOnly=true;inp.tabIndex=-1}
+    else inp.addEventListener("change",()=>{
+      Object.keys(state.adjust).filter(x=>eq(x,r.n)).forEach(x=>delete state.adjust[x]);
+      const diff=inp.value.trim()===""?0:Math.round((num(inp.value)-r.rec)*100)/100;
+      if(diff)state.adjust[r.n]=diff;save();renderKids();
+    });
+    box.appendChild(el);
+  });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>anim.forEach(f=>f())));
+}
+
+/* ---------- histórico ---------- */
+function perPage(){const h=$("hlist").clientHeight;return Math.max(3,Math.floor((h+8)/74))}
+function renderHistory(){
+  const list=$("hlist");list.innerHTML="";
+  const hs=visibleHistory(),n=hs.length;
+  $("histCount").textContent=n?`${n} sorteio${n===1?"":"s"}`:"";
+  $("pager").hidden=true;
+  if(!n){list.innerHTML='<p class="empty">Ainda não teve sorteio. Os resultados aparecem aqui.</p>';return}
+  const pp=perPage(),pages=Math.ceil(n/pp);hPage=Math.min(hPage,pages-1);
+  hs.slice(hPage*pp,hPage*pp+pp).forEach(h=>{
+    const it=document.createElement("div");it.className="hitem";
+    it.innerHTML=`<div class="ref"></div>${isViewer()?"":'<button class="del" aria-label="Excluir registro">✕</button>'}<div class="ws"></div><div class="when"></div>`;
+    const ref=it.querySelector(".ref");ref.textContent=h.reference+(h.cycle?` · ciclo ${h.cycle}`:"");
+    if(!released(h)){const b=document.createElement("span");b.className="pend";b.textContent=`libera ${dateBR(releaseDate(h))}`;ref.appendChild(b)}
+    it.querySelector(".ws").textContent=h.winners.map(w=>`${ava(w.name)} ${w.name} ${brl(w.amount)}`).join("   ");
+    it.querySelector(".when").textContent=h.when?`Sorteado em ${h.when}`:"";
+    const del=it.querySelector(".del");
+    if(del)del.onclick=async()=>{if(await ask(`Excluir o sorteio de ${h.reference}?`,"Excluir",true)){
+      state.history=state.history.filter(x=>x.id!==h.id);
+      if(state.history.length)rebuildCycle();else resetProgress();
+      save();renderAll();toast("Sorteio excluído")}};
+    list.appendChild(it);
+  });
+  if(pages>1){$("pager").hidden=false;$("hPage").textContent=`Página ${hPage+1} de ${pages}`;$("hPrev").disabled=hPage===0;$("hNext").disabled=hPage>=pages-1}
+}
+$("hPrev").onclick=()=>{hPage--;renderHistory()};$("hNext").onclick=()=>{hPage++;renderHistory()};
+$("clearHist").onclick=async()=>{
+  if(isViewer())return;
+  if(await ask(state.history.length?"Apagar todo o histórico? Isso também zera o ciclo, as barras de progresso, os status de recebimento e os cofrinhos. Os participantes continuam. Exporte um backup antes se quiser guardar.":"Zerar o ciclo, as barras de progresso, os status de recebimento e os cofrinhos? Os participantes continuam.","Zerar tudo",true)){
+    const first=state.history[state.history.length-1];
+    if(first&&first.month!=null&&first.year){state.month=first.month;state.year=first.year}
+    state.history=[];resetProgress();save();renderAll();toast(`Tudo zerado. Recomeça em ${refText()}.`)}};
+function resetProgress(){
+  state.cycle={number:1,won:[],prev:[]};state.adjust={};
+  for(const k in lastW)delete lastW[k];
+  rolling=false;$("slots").innerHTML="";$("stamp").textContent="";
+  const c=$("confetti");c.getContext("2d").clearRect(0,0,c.width,c.height);
+}
+addEventListener("resize",()=>{if(cur()==="Histórico")renderHistory()});
+
+/* ---------- exportar / importar ---------- */
+$("exportBtn").onclick=async()=>{
+  state.updatedAt=state.updatedAt||Date.now();
+  const data=JSON.stringify({app:"sorteio",versao:7,exportadoEm:new Date().toISOString(),...state},null,2);
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=DATA_FILE;document.body.appendChild(a);a.click();a.remove();
+    pub=sanitize(JSON.parse(data));setSync();toast(`${DATA_FILE} baixado. Coloque na pasta do app no lugar do antigo.`)}
+  catch(e){try{await navigator.clipboard.writeText(data);toast("Dados copiados para a área de transferência")}catch(_){toast("Não foi possível exportar")}}
+};
+$("savePass").onclick=()=>{const v=$("newPass").value.trim();if(v.length<4){toast("Use pelo menos 4 dígitos");return}state.adminHash=passHash(v);$("newPass").value="";save();toast("Senha alterada. Exporte o arquivo para valer no site.")};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    try{
+      const s=JSON.parse(r.result);
+      if(!Array.isArray(s.names)&&!Array.isArray(s.history))throw 0;
+      const n=(s.names||[]).length,h=(s.history||[]).length;
+      if(!await ask(`Importar ${plural(n)} e ${h} sorteio${h===1?"":"s"} do histórico? Os dados atuais serão substituídos.`,"Importar"))return;
+      state=sanitize(s);ensureAvatars();save();renderAll();toast("Backup importado");
+    }catch(_){toast("Arquivo inválido. Use um .json exportado por este app.")}
+    $("importFile").value="";
+  };
+  r.readAsText(f);
+};
+
+/* ---------- tela cheia e atalhos ---------- */
+$("draw").onclick=draw;$("drawAll").onclick=drawAll;
+document.addEventListener("keydown",e=>{
+  if(!$("modal").hidden)return;
+  const a=document.activeElement;
+  if(["TEXTAREA","INPUT","SELECT"].includes(a.tagName))return;
+  if(e.key==="ArrowRight"){go(screen+1);return}
+  if(e.key==="ArrowLeft"){go(screen-1);return}
+  if(a.tagName==="BUTTON"&&a.id!=="draw")return;
+  if(e.code==="Space"&&cur()==="Sortear"){e.preventDefault();draw()}
+});
+
+function taken(m,y){return state.history.some(h=>h.month===m&&h.year===y)}
+function skipTaken(){ // pula meses que já têm sorteio, começando do mês configurado
+  if(isViewer()||rolling)return false;let moved=false,g=0;
+  while(taken(state.month,state.year)&&g++<240){state.month++;if(state.month>11){state.month=0;state.year++}moved=true}
+  return moved;
+}
+function renderAll(){if(skipTaken())save();fillConfig();renderNames();refresh();idleSlots();renderScreen()}
+setInterval(()=>{if(!rolling)renderScreen()},60000); // a agenda e as liberações acompanham o dia
+init();
+</script>
+</body>
+</html>
